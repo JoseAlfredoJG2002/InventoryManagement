@@ -1,10 +1,12 @@
 ﻿using Inventory.Application.DTOs.Categories;
 using Inventory.Application.Features.Categories.Commands;
 using Inventory.Application.Features.Categories.Queries;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Inventory.Api.Controllers;
 
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public sealed class CategoriesController : ControllerBase

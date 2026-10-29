@@ -8,6 +8,9 @@ using Inventory.Application.Features.Products.Commands;
 using Inventory.Application.Features.Products.Queries;
 using Inventory.Infrastructure.Persistence.Repositories;
 using Inventory.Api.Middleware;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +37,17 @@ builder.Services.AddScoped<GetCategoryByIdHandler>();
 
 builder.Services.AddScoped<RegisterInventoryMovementHandler>();
 
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = "http://localhost:8080/realms/inventory";
+        options.Audience = "inventory-api";
+        options.RequireHttpsMetadata = false;
+    });
+
+builder.Services.AddAuthorization();
+
 var connectionString = builder.Configuration.GetConnectionString("InventoryDb");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -49,7 +63,41 @@ builder.Services.AddDbContext<InventoryDbContext>(options =>
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
+    {
+        Type = SecuritySchemeType.OAuth2,
+        Flows = new OpenApiOAuthFlows
+        {
+            AuthorizationCode = new OpenApiOAuthFlow
+            {
+                AuthorizationUrl = new Uri("http://localhost:8080/realms/inventory/protocol/openid-connect/auth"),
+                TokenUrl = new Uri("http://localhost:8080/realms/inventory/protocol/openid-connect/token"),
+                Scopes = new Dictionary<string, string>
+                {
+                    ["openid"] = "OpenID Connect",
+                    ["profile"] = "View user profile",
+                    ["email"] = "View email"
+                }
+            }
+        }
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "oauth2"
+                }
+            },
+            new[] { "openid", "profile", "email" }
+        }
+    });
+});
 
 var app = builder.Build();
 
@@ -57,12 +105,18 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        options.OAuthClientId("inventory-swagger");
+        options.OAuthUsePkce();
+    });
 }
 
 app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 

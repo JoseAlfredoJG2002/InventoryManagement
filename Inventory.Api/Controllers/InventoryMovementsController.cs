@@ -1,10 +1,12 @@
 ﻿using Inventory.Application.DTOs.Inventory;
 using Inventory.Application.Features.Inventory.Commands;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Inventory.Api.Controllers
 
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public sealed class InventoryMovementsController : ControllerBase
