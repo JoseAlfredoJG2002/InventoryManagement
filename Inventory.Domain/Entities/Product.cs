@@ -49,7 +49,10 @@
                 throw new ArgumentOutOfRangeException(nameof(quantity), "Quantity must be greater than zero.");
             if (!isEntry && quantity > StockQuantity)
                 throw new InvalidOperationException("Insufficient stock.");
-            StockQuantity = isEntry ? StockQuantity + quantity : StockQuantity - quantity;
+
+            StockQuantity = isEntry
+                ? checked(StockQuantity + quantity)
+                : StockQuantity - quantity;
         }
         public void Deactivate()
         {
