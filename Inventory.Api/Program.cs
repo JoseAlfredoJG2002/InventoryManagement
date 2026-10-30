@@ -37,14 +37,27 @@ builder.Services.AddScoped<GetCategoryByIdHandler>();
 
 builder.Services.AddScoped<RegisterInventoryMovementHandler>();
 
+
+var authority = builder.Configuration["Authentication:Authority"]
+    ?? "http://localhost:8080/realms/inventory";
+var validIssuer = builder.Configuration["Authentication:ValidIssuer"]
+    ?? authority;
+var audience = builder.Configuration["Authentication:Audience"]
+    ?? "inventory-api";
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.Authority = "http://localhost:8080/realms/inventory";
-        options.Audience = "inventory-api";
+        options.Authority = authority;
+        options.Audience = audience;
         options.RequireHttpsMetadata = false;
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidIssuer = validIssuer
+        };
     });
+
 
 builder.Services.AddAuthorization();
 
