@@ -361,3 +361,17 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Local environment variables
+.env
+.env.*
+!.env.example
+
+# Local development secrets
+**/secrets.json
+
+# Local Keycloak backup
+keycloak-backup/
+
+# Test coverage reports
+CoverageReport/
